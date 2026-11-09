@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Output directories & temporary generated files
+vcf_output/
+vcf_output_renamed/
+vcf_split_output/
+txt_output/
+txt_output_from_vcf/
+xlsx_output/
+user_temp/
+gabung/
+split_vcf/
+generated_screenshots/
+i_vcf/
+WhatsApp Contacts/
+bot cv/
+bot cv.zip
+
+# Cache, credentials, personal/customer data
+.vcf_tools_cache.json
+*.log
+.dist/
+tempCodeRunnerFile.py
+access_data.json
+*.xlsx
+nomor_telepon.txt
+namectc.txt
+gabungan.txt
+*.jpg
+*.jpeg
+*.png
+
+# Telegram bots with tokens & old scratch patches
+backupbotcv.py
+BOTCV3.py
+patch*.py

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Screenshot Editor</title>
+  <!-- Load JSZip library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    /* Import font dari Google Fonts untuk pengganti SF Pro Display */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    
+    .editor-container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .canvas-container {
+      margin: 20px 0;
+      text-align: center;
+      position: relative;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input[type="text"],
+    input[type="number"],
+    input[type="color"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+      min-height: 150px;
+    }
+    
+    button {
+      background-color: #00a884;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    
+    button:hover {
+      background-color: #008f6f;
+    }
+    
+    #allImagesContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .preview-image {
+      max-width: 100%;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+    
+    .batch-preview-container {
+      position: relative;
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .download-button {
+      background-color: #00a884;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    
+    .download-all-button {
+      background-color: #0a7cff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    
+    .result-info {
+      background-color: #00a884;
+      color: white;
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .section-title {
+      margin-top: 30px;
+      font-weight: bold;
+      color: #444;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
+    
+    .canvas-label {
+      display: inline-block;
+      background-color: rgba(0,0,0,0.7);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    
+    .coordinate-display {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-family: monospace;
+    }
+
+    .random-range-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .random-range-container input {
+      flex: 1;
+    }
+
+    .random-range-container span {
+      font-weight: bold;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      margin-left: 5px;
+      cursor: help;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="editor-container">
+    <h1>WhatsApp Screenshot Editor</h1>
+    
+    <div class="form-group">
+      <label for="originalScreenshot">Upload Screenshot WhatsApp:</label>
+      <input type="file" id="originalScreenshot" accept="image/*">
+    </div>
+    
+    <div id="setupSection" style="display: none;">
+      <h3 class="section-title">Konfigurasi Posisi Teks</h3>
+      <p>Klik pada gambar untuk menentukan posisi elemen yang akan diubah.</p>
+      
+      <div class="form-group">
+        <button id="selectGroupTitleBtn">1. Pilih Posisi Nama Grup</button>
+        <button id="selectPendingCountBtn">2. Pilih Posisi Jumlah Permintaan</button>
+        <button id="resetPositionsBtn">Reset Posisi</button>
+      </div>
+      
+      <div id="coordinateDisplay" class="coordinate-display" style="display: none;">
+        Koordinat yang dipilih: <span id="selectedCoordinates"></span>
+      </div>
+    </div>
+    
+    <div id="canvasContainer" class="canvas-container" style="display: none;">
+      <div id="canvasLabel" class="canvas-label">Klik untuk menentukan posisi</div>
+      <canvas id="editCanvas"></canvas>
+    </div>
+    
+    <div id="batchSection" style="display: none;">
+      <h3 class="section-title">Pengaturan Batch</h3>
+      
+      <div class="form-group">
+        <label for="groupNameList">Daftar Nama Grup (satu per baris):</label>
+        <textarea id="groupNameList" placeholder="Contoh:
+商家推廣WYP01
+商家推廣WYP02
+商家推廣WYP03"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="randomPendingCount">Rentang Jumlah Permintaan Tertunda (Acak):
+          <div class="tooltip">?
+            <span class="tooltiptext">Setiap gambar akan memiliki jumlah permintaan acak antara nilai minimal dan maksimal</span>
+          </div>
+        </label>
+        <div class="random-range-container">
+          <input type="number" id="minPendingCount" value="5" min="0" max="999" placeholder="Min">
+          <span>sampai</span>
+          <input type="number" id="maxPendingCount" value="20" min="0" max="999" placeholder="Max">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="pendingCountColor">Warna Lingkaran Permintaan Tertunda:</label>
+        <input type="color" id="pendingCountColor" value="#00a884">
+      </div>
+      
+      <div class="form-group">
+        <label for="groupTitleColor">Warna Teks Nama Grup:</label>
+        <input type="color" id="groupTitleColor" value="#ffffff">
+      </div>
+      
+      <div class="form-group">
+        <label for="pendingTextColor">Warna Teks Jumlah Permintaan:</label>
+        <input type="color" id="pendingTextColor" value="#ffffff">
+      </div>
+      
+      <div class="form-group">
+        <label for="groupTitleFont">Ukuran Font Nama Grup (px):</label>
+        <input type="number" id="groupTitleFont" value="18" min="8" max="36">
+      </div>
+      
+      <div class="form-group">
+        <label for="pendingCountFont">Ukuran Font Jumlah Permintaan (px):</label>
+        <input type="number" id="pendingCountFont" value="14" min="8" max="36">
+      </div>
+      
+      <div class="form-group">
+        <label for="coverTitleBg">Warna Kotak Penutup Nama Grup:</label>
+        <input type="color" id="coverTitleBg" value="#121212">
+      </div>
+      
+      <div class="form-group">
+        <label for="titleBoxWidth">Lebar Kotak Penutup Nama Grup (px):</label>
+        <input type="number" id="titleBoxWidth" value="200" min="50" max="500">
+      </div>
+      
+      <div class="form-group">
+        <label for="titleBoxHeight">Tinggi Kotak Penutup Nama Grup (px):</label>
+        <input type="number" id="titleBoxHeight" value="30" min="20" max="100">
+      </div>
+      
+      <button id="generatePreviewBtn">Generate Preview</button>
+      <button id="generateAllBtn">Generate Semua Gambar</button>
+      <button id="clearBtn">Bersihkan</button>
+    </div>
+  </div>
+  
+  <div id="previewSection" class="editor-container" style="display: none;">
+    <h3 class="section-title">Preview</h3>
+    <div id="previewContainer" class="canvas-container">
+      <canvas id="previewCanvas"></canvas>
+      <button id="downloadPreviewBtn" class="download-button">Unduh Preview</button>
+    </div>
+  </div>
+  
+  <div id="resultInfo" class="result-info" style="display: none;">
+    <span>Foto telah dibuat - gulir ke bawah untuk melihat</span>
+    <button id="downloadAllBtn" class="download-all-button">Unduh Semua Gambar (ZIP)</button>
+  </div>
+  
+  <div id="allImagesContainer"></div>
+
+  <script>
+    // Element references
+    const originalScreenshotInput = document.getElementById('originalScreenshot');
+    const editCanvas = document.getElementById('editCanvas');
+    const editCtx = editCanvas.getContext('2d');
+    const previewCanvas = document.getElementById('previewCanvas');
+    const previewCtx = previewCanvas.getContext('2d');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const canvasLabel = document.getElementById('canvasLabel');
+    const setupSection = document.getElementById('setupSection');
+    const batchSection = document.getElementById('batchSection');
+    const previewSection = document.getElementById('previewSection');
+    const allImagesContainer = document.getElementById('allImagesContainer');
+    const resultInfo = document.getElementById('resultInfo');
+    
+    // Buttons
+    const selectGroupTitleBtn = document.getElementById('selectGroupTitleBtn');
+    const selectPendingCountBtn = document.getElementById('selectPendingCountBtn');
+    const resetPositionsBtn = document.getElementById('resetPositionsBtn');
+    const generatePreviewBtn = document.getElementById('generatePreviewBtn');
+    const generateAllBtn = document.getElementById('generateAllBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const downloadPreviewBtn = document.getElementById('downloadPreviewBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    
+    // Input fields
+    const groupNameList = document.getElementById('groupNameList');
+    const minPendingCount = document.getElementById('minPendingCount');
+    const maxPendingCount = document.getElementById('maxPendingCount');
+    const pendingCountColor = document.getElementById('pendingCountColor');
+    const groupTitleColor = document.getElementById('groupTitleColor');
+    const pendingTextColor = document.getElementById('pendingTextColor');
+    const groupTitleFont = document.getElementById('groupTitleFont');
+    const pendingCountFont = document.getElementById('pendingCountFont');
+    const coverTitleBg = document.getElementById('coverTitleBg');
+    const titleBoxWidth = document.getElementById('titleBoxWidth');
+    const titleBoxHeight = document.getElementById('titleBoxHeight');
+    
+    // Coordinates display
+    const coordinateDisplay = document.getElementById('coordinateDisplay');
+    const selectedCoordinates = document.getElementById('selectedCoordinates');
+    
+    // Original image
+    let originalImage = null;
+    
+    // Position variables
+    let selectionMode = null;
+    let groupTitlePosition = null;
+    let pendingCountPosition = null;
+    
+    // Generate random number between min and max (inclusive)
+    function getRandomInt(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    // Load and prepare the original screenshot
+    originalScreenshotInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            originalImage = img;
+            
+            // Set canvas dimensions
+            editCanvas.width = img.width;
+            editCanvas.height = img.height;
+            
+            // Draw the original image
+            editCtx.drawImage(img, 0, 0);
+            
+            // Show setup section and canvas
+            setupSection.style.display = 'block';
+            canvasContainer.style.display = 'block';
+            
+            // Reset positions
+            groupTitlePosition = null;
+            pendingCountPosition = null;
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    // Position selection functions
+    selectGroupTitleBtn.addEventListener('click', () => {
+      selectionMode = 'groupTitle';
+      canvasLabel.textContent = 'Klik untuk memilih posisi nama grup';
+      canvasLabel.style.backgroundColor = '#e74c3c';
+    });
+    
+    selectPendingCountBtn.addEventListener('click', () => {
+      selectionMode = 'pendingCount';
+      canvasLabel.textContent = 'Klik untuk memilih posisi jumlah permintaan';
+      canvasLabel.style.backgroundColor = '#3498db';
+    });
+    
+    resetPositionsBtn.addEventListener('click', () => {
+      groupTitlePosition = null;
+      pendingCountPosition = null;
+      selectionMode = null;
+      canvasLabel.textContent = 'Klik untuk menentukan posisi';
+      canvasLabel.style.backgroundColor = 'rgba(0,0,0,0.7)';
+      coordinateDisplay.style.display = 'none';
+      
+      // Redraw original image
+      if (originalImage) {
+        editCtx.clearRect(0, 0, editCanvas.width, editCanvas.height);
+        editCtx.drawImage(originalImage, 0, 0);
+      }
+    });
+    
+    // Canvas click handler
+    editCanvas.addEventListener('click', (e) => {
+      if (!selectionMode || !originalImage) return;
+      
+      const rect = editCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      if (selectionMode === 'groupTitle') {
+        groupTitlePosition = { x, y };
+        drawPositionMarker(x, y, '#e74c3c', 'Nama Grup');
+      } else if (selectionMode === 'pendingCount') {
+        pendingCountPosition = { x, y };
+        drawPositionMarker(x, y, '#3498db', 'Jumlah Permintaan');
+      }
+      
+      // Display coordinates
+      coordinateDisplay.style.display = 'block';
+      selectedCoordinates.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+      
+      // Check if both positions are set
+      if (groupTitlePosition && pendingCountPosition) {
+        batchSection.style.display = 'block';
+      }
+    });
+    
+    // Draw position marker
+    function drawPositionMarker(x, y, color, label) {
+      // Redraw the original image
+      editCtx.drawImage(originalImage, 0, 0);
+      
+      // Draw markers for both positions
+      if (groupTitlePosition) {
+        editCtx.beginPath();
+        editCtx.arc(groupTitlePosition.x, groupTitlePosition.y, 10, 0, 2 * Math.PI);
+        editCtx.fillStyle = '#e74c3c';
+        editCtx.fill();
+        
+        editCtx.font = '12px Inter, sans-serif';
+        editCtx.fillStyle = 'white';
+        editCtx.textAlign = 'center';
+        editCtx.fillText('Nama Grup', groupTitlePosition.x, groupTitlePosition.y - 15);
+      }
+      
+      if (pendingCountPosition) {
+        editCtx.beginPath();
+        editCtx.arc(pendingCountPosition.x, pendingCountPosition.y, 10, 0, 2 * Math.PI);
+        editCtx.fillStyle = '#3498db';
+        editCtx.fill();
+        
+        editCtx.font = '12px Inter, sans-serif';
+        editCtx.fillStyle = 'white';
+        editCtx.textAlign = 'center';
+        editCtx.fillText('Jumlah', pendingCountPosition.x, pendingCountPosition.y - 15);
+      }
+    }
+    
+    // Generate preview
+    generatePreviewBtn.addEventListener('click', () => {
+      if (!originalImage || !groupTitlePosition || !pendingCountPosition) {
+        alert('Mohon tentukan posisi nama grup dan jumlah permintaan terlebih dahulu!');
+        return;
+      }
+      
+      // Setup preview canvas
+      previewCanvas.width = originalImage.width;
+      previewCanvas.height = originalImage.height;
+      
+      // Generate image with first group name
+      const firstGroupName = groupNameList.value.split('\n')[0].trim() || '商家推廣WYP08';
+      const min = parseInt(minPendingCount.value) || 1;
+      const max = parseInt(maxPendingCount.value) || 20;
+      const count = getRandomInt(min, max);
+      
+      generateEditedImage(previewCtx, firstGroupName, count);
+      
+      // Show preview section
+      previewSection.style.display = 'block';
+    });
+    
+    // Generate all images
+    generateAllBtn.addEventListener('click', async () => {
+      if (!originalImage || !groupTitlePosition || !pendingCountPosition) {
+        alert('Mohon tentukan posisi nama grup dan jumlah permintaan terlebih dahulu!');
+        return;
+      }
+      
+      const groupNames = groupNameList.value.split('\n').filter(name => name.trim() !== '');
+      const min = parseInt(minPendingCount.value) || 1;
+      const max = parseInt(maxPendingCount.value) || 20;
+      
+      if (groupNames.length === 0) {
+        alert('Silakan masukkan setidaknya satu nama grup!');
+        return;
+      }
+      
+      if (min > max) {
+        alert('Nilai minimum tidak boleh lebih besar dari nilai maksimum!');
+        return;
+      }
+      
+      // Reset container
+      allImagesContainer.innerHTML = '';
+      
+      // Add download all button container at the top
+      const downloadAllContainer = document.createElement('div');
+      downloadAllContainer.style.textAlign = 'center';
+      downloadAllContainer.style.marginBottom = '20px';
+      downloadAllContainer.style.padding = '15px';
+      downloadAllContainer.style.backgroundColor = '#f4f4f4';
+      downloadAllContainer.style.borderRadius = '8px';
+      
+      // Create count info
+      const countInfo = document.createElement('div');
+      countInfo.textContent = `Total gambar: ${groupNames.length}`;
+      countInfo.style.marginBottom = '10px';
+      countInfo.style.fontWeight = 'bold';
+      downloadAllContainer.appendChild(countInfo);
+      
+      allImagesContainer.appendChild(downloadAllContainer);
+      
+      // Show result info
+      resultInfo.style.display = 'flex';
+      
+      // Create temporary canvas for each image
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = originalImage.width;
+      tempCanvas.height = originalImage.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      // Store all image data for batch download
+      const allImageData = [];
+      
+      // Generate image for each group name
+      for (let i = 0; i < groupNames.length; i++) {
+        const groupName = groupNames[i].trim();
+        if (groupName) {
+          // Generate random count for this image
+          const count = getRandomInt(min, max);
+          
+          // Generate the edited image
+          generateEditedImage(tempCtx, groupName, count);
+          
+          // Create container for image
+          const container = document.createElement('div');
+          container.className = 'batch-preview-container';
+          
+          // Add group name and count as title
+          const title = document.createElement('h3');
+          title.textContent = `${groupName} (${count} permintaan)`;
+          container.appendChild(title);
+          
+          // Add image
+          const img = document.createElement('img');
+          img.src = tempCanvas.toDataURL('image/png');
+          img.className = 'preview-image';
+          img.alt = `Edited image for ${groupName}`;
+          container.appendChild(img);
+          
+          // Store image data for batch download
+          allImageData.push({
+            name: `whatsapp_${groupName.replace(/[^\w]/g, '_')}_${count}.png`,
+            dataUrl: img.src
+          });
+          
+          // Add download button
+          const downloadBtn = document.createElement('button');
+          downloadBtn.textContent = `Unduh "${groupName}"`;
+          downloadBtn.className = 'download-button';
+          downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = img.src;
+            link.download = `whatsapp_${groupName.replace(/[^\w]/g, '_')}_${count}.png`;
+            link.click();
+          });
+          container.appendChild(downloadBtn);
+          
+          allImagesContainer.appendChild(container);
+        }
+      }
+      
+      // Store image data in a global variable for download all functionality
+      window.allWhatsAppImages = allImageData;
+      
+      // Scroll to results
+      resultInfo.scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    // Generate edited image
+    function generateEditedImage(ctx, groupName, count) {
+      // Draw original image
+      ctx.drawImage(originalImage, 0, 0);
+      
+      // Calculate badge size based on the count
+      let badgeRadius = 12;
+      if (count >= 10) badgeRadius = 14;
+      if (count >= 100) badgeRadius = 16;
+      
+      // Draw cover box for group title
+      const boxWidth = parseInt(titleBoxWidth.value);
+      const boxHeight = parseInt(titleBoxHeight.value);
+      ctx.fillStyle = coverTitleBg.value;
+      ctx.fillRect(
+        groupTitlePosition.x - boxWidth/2, 
+        groupTitlePosition.y - boxHeight/2,
+        boxWidth,
+        boxHeight
+      );
+      
+      // Draw group title
+      const fontSize = parseInt(groupTitleFont.value);
+      ctx.font = `bold ${fontSize}px 'Inter', sans-serif`;
+      ctx.fillStyle = groupTitleColor.value;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(groupName, groupTitlePosition.x, groupTitlePosition.y);
+      
+      // Draw pending count background
+      ctx.beginPath();
+      ctx.arc(pendingCountPosition.x, pendingCountPosition.y, badgeRadius, 0, 2 * Math.PI);
+      ctx.fillStyle = pendingCountColor.value;
+      ctx.fill();
+      
+      // Draw pending count text
+      const pendingFontSize = parseInt(pendingCountFont.value);
+      ctx.font = `${pendingFontSize}px 'Inter', sans-serif`;
+      ctx.fillStyle = pendingTextColor.value;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(count, pendingCountPosition.x, pendingCountPosition.y);
+    }
+    
+    // Download preview
+    downloadPreviewBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = previewCanvas.toDataURL('image/png');
+      link.download = 'whatsapp_preview.png';
+      link.click();
+    });
+    
+    // Download all images functionality
+    downloadAllBtn.addEventListener('click', async () => {
+      if (!window.allWhatsAppImages || window.allWhatsAppImages.length === 0) {
+        alert('Tidak ada gambar yang tersedia untuk diunduh!');
+        return;
+      }
+
+      // Check if JSZip is available
+      if (typeof JSZip === 'undefined') {
+        // Load JSZip dynamically
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        document.head.appendChild(script);
+        
+        script.onload = () => {
+          downloadAllImagesAsZip();
+        };
+        
+        script.onerror = () => {
+          alert('Gagal memuat JSZip. Silakan coba lagi nanti atau unduh satu per satu.');
+        };
+      } else {
+        downloadAllImagesAsZip();
+      }
+    });
+    
+    // Function to create and download ZIP file
+    async function downloadAllImagesAsZip() {
+      // Create loading indicator
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.style.position = 'fixed';
+      loadingIndicator.style.top = '50%';
+      loadingIndicator.style.left = '50%';
+      loadingIndicator.style.transform = 'translate(-50%, -50%)';
+      loadingIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+      loadingIndicator.style.color = 'white';
+      loadingIndicator.style.padding = '20px';
+      loadingIndicator.style.borderRadius = '10px';
+      loadingIndicator.style.zIndex = '1000';
+      loadingIndicator.style.fontSize = '16px';
+      loadingIndicator.textContent = 'Menyiapkan ZIP file...';
+      document.body.appendChild(loadingIndicator);
+      
+      try {
+        const zip = new JSZip();
+        const images = window.allWhatsAppImages;
+        
+        // Add each image to the zip
+        for (let i = 0; i < images.length; i++) {
+          const image = images[i];
+          
+          // Update loading indicator
+          loadingIndicator.textContent = `Memproses gambar ${i+1} dari ${images.length}...`;
+          
+          // Convert data URL to blob
+          const response = await fetch(image.dataUrl);
+          const blob = await response.blob();
+          
+          // Add to zip
+          zip.file(image.name, blob);
+        }
+        
+        // Generate zip file
+        loadingIndicator.textContent = 'Membuat file ZIP...';
+        const content = await zip.generateAsync({ type: 'blob' });
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = 'whatsapp_screenshots.zip';
+        link.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          URL.revokeObjectURL(link.href);
+        }, 60000);
+        
+        // Remove loading indicator
+        document.body.removeChild(loadingIndicator);
+      } catch (error) {
+        console.error('Error creating ZIP file:', error);
+        alert('Terjadi kesalahan saat membuat file ZIP. Silakan coba lagi nanti.');
+        document.body.removeChild(loadingIndicator);
+      }
+    }
+    
+    // Clear everything
+    clearBtn.addEventListener('click', () => {
+      groupNameList.value = '';
+      minPendingCount.value = '5';
+      maxPendingCount.value = '20';
+      pendingCountColor.value = '#00a884';
+      groupTitleColor.value = '#ffffff';
+      pendingTextColor.value = '#ffffff';
+      groupTitleFont.value = '18';
+      pendingCountFont.value = '14';
+      coverTitleBg.value = '#121212';
+      titleBoxWidth.value = '200';
+      titleBoxHeight.value = '30';
+      previewSection.style.display = 'none';
+      allImagesContainer.innerHTML = '';
+      resultInfo.style.display = 'none';
+      
+      // Clear stored image data
+      window.allWhatsAppImages = [];
+    });
+    
+    // Validasi input rentang
+    minPendingCount.addEventListener('change', () => {
+      if (parseInt(minPendingCount.value) > parseInt(maxPendingCount.value)) {
+        alert('Nilai minimum tidak boleh lebih besar dari nilai maksimum!');
+        minPendingCount.value = maxPendingCount.value;
+      }
+    });
+    
+    maxPendingCount.addEventListener('change', () => {
+      if (parseInt(maxPendingCount.value) < parseInt(minPendingCount.value)) {
+        alert('Nilai maksimum tidak boleh lebih kecil dari nilai minimum!');
+        maxPendingCount.value = minPendingCount.value;
+      }
+    });
+  </script>
+</body>
+</html>

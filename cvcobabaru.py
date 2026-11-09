@@ -45,7 +45,7 @@ def txt_to_vcf(input_txt, contacts_per_file, base_name):
     name_counter = 1  # Untuk menghitung urutan nama kontak
     while contact_counter < total_contacts:
         # Nama file VCF otomatis dengan prefix "contact_"
-        output_vcf = f"XXX {file_index + 1}.vcf"
+        output_vcf = f"Z{file_index + 1}.vcf"
         output_vcf_path = os.path.join(output_folder, output_vcf)
 
         with open(output_vcf_path, 'w') as vcf_file:

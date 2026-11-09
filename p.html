@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial Vue.js Dasar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .example {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover { background: #0056b3; }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px;
+            width: 200px;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #28a745;
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.5s;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Tutorial Vue.js Dasar</h1>
+        
+        <!-- Example 1: Data Binding -->
+        <div class="example">
+            <h2>1. Data Binding & Interpolation</h2>
+            <div id="app1">
+                <h3>Halo, {{ nama }}!</h3>
+                <p>Umur: {{ umur }} tahun</p>
+                <p>{{ pesan }}</p>
+                <button @click="ubahNama">Ubah Nama</button>
+                <button @click="tambahUmur">Tambah Umur</button>
+            </div>
+        </div>
+
+        <!-- Example 2: v-model (Two-way binding) -->
+        <div class="example">
+            <h2>2. v-model (Two-way Data Binding)</h2>
+            <div id="app2">
+                <input v-model="inputNama" placeholder="Ketik nama kamu...">
+                <p>Halo, {{ inputNama }}!</p>
+                <p>Jumlah karakter: {{ inputNama.length }}</p>
+            </div>
+        </div>
+
+        <!-- Example 3: v-if & v-show -->
+        <div class="example">
+            <h2>3. Conditional Rendering (v-if & v-show)</h2>
+            <div id="app3">
+                <button @click="tampilkan = !tampilkan">Toggle Pesan</button>
+                <button @click="mode = !mode">Toggle Mode</button>
+                
+                <div v-if="tampilkan" class="card">
+                    <p v-if="mode">Mode: Terang ☀️</p>
+                    <p v-else>Mode: Gelap 🌙</p>
+                </div>
+                
+                <div v-show="tampilkan" class="card">
+                    <p>Pesan ini menggunakan v-show</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example 4: v-for (List Rendering) -->
+        <div class="example">
+            <h2>4. List Rendering (v-for)</h2>
+            <div id="app4">
+                <input v-model="itemBaru" @keyup.enter="tambahItem" placeholder="Tambah item...">
+                <button @click="tambahItem">Tambah</button>
+                
+                <h3>Daftar Item ({{ items.length }} item):</h3>
+                <div v-for="(item, index) in items" :key="index" class="card">
+                    <span>{{ index + 1 }}. {{ item.nama }}</span>
+                    <button @click="hapusItem(index)" style="background: #dc3545; float: right;">Hapus</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example 5: Computed Properties -->
+        <div class="example">
+            <h2>5. Computed Properties</h2>
+            <div id="app5">
+                <input v-model="angka1" type="number" placeholder="Angka 1">
+                <input v-model="angka2" type="number" placeholder="Angka 2">
+                
+                <div class="card">
+                    <p><strong>Hasil Perhitungan:</strong></p>
+                    <p>Penjumlahan: {{ penjumlahan }}</p>
+                    <p>Perkalian: {{ perkalian }}</p>
+                    <p>Rata-rata: {{ rataRata }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example 6: Methods vs Computed -->
+        <div class="example">
+            <h2>6. Methods vs Computed</h2>
+            <div id="app6">
+                <p>Waktu sekarang (computed): {{ waktuComputed }}</p>
+                <p>Waktu sekarang (method): {{ getWaktuMethod() }}</p>
+                <button @click="counter++">Update Counter: {{ counter }}</button>
+                <p><small>Perhatikan: computed hanya update ketika dependency berubah</small></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Example 1: Basic Vue Instance
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    nama: 'Vue.js Learner',
+                    umur: 20,
+                    pesan: 'Selamat belajar Vue.js! 🎉'
+                }
+            },
+            methods: {
+                ubahNama() {
+                    const namaList = ['Budi', 'Sari', 'Andi', 'Rina', 'Doni'];
+                    this.nama = namaList[Math.floor(Math.random() * namaList.length)];
+                },
+                tambahUmur() {
+                    this.umur++;
+                }
+            }
+        }).mount('#app1');
+
+        // Example 2: v-model
+        createApp({
+            data() {
+                return {
+                    inputNama: 'Ketik disini...'
+                }
+            }
+        }).mount('#app2');
+
+        // Example 3: v-if & v-show
+        createApp({
+            data() {
+                return {
+                    tampilkan: true,
+                    mode: true
+                }
+            }
+        }).mount('#app3');
+
+        // Example 4: v-for
+        createApp({
+            data() {
+                return {
+                    items: [
+                        { nama: 'Belajar Vue.js' },
+                        { nama: 'Membuat Project' },
+                        { nama: 'Deploy ke Production' }
+                    ],
+                    itemBaru: ''
+                }
+            },
+            methods: {
+                tambahItem() {
+                    if (this.itemBaru.trim()) {
+                        this.items.push({ nama: this.itemBaru });
+                        this.itemBaru = '';
+                    }
+                },
+                hapusItem(index) {
+                    this.items.splice(index, 1);
+                }
+            }
+        }).mount('#app4');
+
+        // Example 5: Computed Properties
+        createApp({
+            data() {
+                return {
+                    angka1: 10,
+                    angka2: 20
+                }
+            },
+            computed: {
+                penjumlahan() {
+                    return Number(this.angka1) + Number(this.angka2);
+                },
+                perkalian() {
+                    return Number(this.angka1) * Number(this.angka2);
+                },
+                rataRata() {
+                    return (Number(this.angka1) + Number(this.angka2)) / 2;
+                }
+            }
+        }).mount('#app5');
+
+        // Example 6: Methods vs Computed
+        createApp({
+            data() {
+                return {
+                    counter: 0
+                }
+            },
+            computed: {
+                waktuComputed() {
+                    return new Date().toLocaleTimeString();
+                }
+            },
+            methods: {
+                getWaktuMethod() {
+                    return new Date().toLocaleTimeString();
+                }
+            }
+        }).mount('#app6');
+    </script>
+</body>
+</html>

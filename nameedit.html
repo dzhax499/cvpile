@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VCF Batch Name Pattern Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .pattern-section {
+            display: none;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 3px solid #e0e7ff;
+        }
+
+        .pattern-section.show {
+            display: block;
+        }
+
+        .pattern-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .pattern-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            padding: 12px 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .preview-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .preview-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+        }
+
+        .preview-examples {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .preview-item {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .apply-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+            width: 100%;
+        }
+
+        .apply-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+        }
+
+        .file-list {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .file-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #374151;
+            margin-top: 5px;
+        }
+
+        .file-item {
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #374151;
+            font-size: 1.1rem;
+            flex: 1;
+        }
+
+        .file-contact-count {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .contact-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item.updated {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .contact-phone {
+            color: #666;
+            font-weight: 500;
+            min-width: 120px;
+            font-size: 0.9rem;
+        }
+
+        .contact-name {
+            flex: 1;
+            min-width: 150px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .name-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .action-section {
+            display: none;
+            margin-top: 40px;
+            text-align: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-section.show {
+            display: flex;
+        }
+
+        .action-btn {
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .download-all-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .download-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+        }
+
+        .download-zip-btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .download-zip-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .collapse-toggle {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .collapse-toggle:hover {
+            background: #e0e7ff;
+        }
+
+        .file-content {
+            max-height: 400px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .file-content.collapsed {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 2px solid #10b981;
+            color: #065f46;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .pattern-form {
+                grid-template-columns: 1fr;
+            }
+
+            .contacts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .contact-phone {
+                min-width: auto;
+            }
+
+            .action-section {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .file-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .preview-examples {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 VCF Pattern Editor</h1>
+            <p>Ganti nama kontak dengan pattern berurut di banyak file VCF</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section">
+                <div class="file-upload">
+                    <input type="file" id="vcfFiles" accept=".vcf" multiple />
+                    <button class="file-upload-btn">
+                        📁 Pilih File VCF (Multiple)
+                    </button>
+                </div>
+                <p style="color: #666; margin-top: 10px;">
+                    Pilih beberapa file VCF untuk diubah nama kontaknya dengan pattern berurut
+                </p>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p id="loadingText">Memproses file VCF...</p>
+            </div>
+
+            <div class="pattern-section" id="patternSection">
+                <div class="pattern-title">🎯 Atur Pattern Nama Kontak</div>
+                
+                <div class="pattern-form">
+                    <div class="form-group">
+                        <label class="form-label">Base Name (Nama Dasar)</label>
+                        <input type="text" class="form-input" id="baseName" 
+                               placeholder="Contoh: FIXX" value="FIXX">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Start Number (Nomor Mulai)</label>
+                        <input type="number" class="form-input" id="startNumber" 
+                               placeholder="1" value="1" min="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Separator (Pemisah)</label>
+                        <input type="text" class="form-input" id="separator" 
+                               placeholder="Contoh: ' ' atau '-'" value=" ">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Digits (Jumlah Digit)</label>
+                        <input type="number" class="form-input" id="digits" 
+                               placeholder="1" value="1" min="1" max="5">
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-title">Preview Pattern:</div>
+                    <div class="preview-examples" id="previewExamples">
+                        <div class="preview-item">FIXX 1</div>
+                        <div class="preview-item">FIXX 2</div>
+                        <div class="preview-item">FIXX 3</div>
+                        <div class="preview-item">...</div>
+                    </div>
+                </div>
+
+                <button class="apply-btn" id="applyPatternBtn">
+                    ✨ Terapkan Pattern ke Semua Kontak
+                </button>
+
+                <div class="success-message" id="successMessage">
+                    🎉 Pattern berhasil diterapkan ke semua kontak!
+                </div>
+            </div>
+
+            <div class="file-list" id="fileList">
+                <div class="file-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="fileCount">0</div>
+                        <div class="stat-label">File VCF</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalContacts">0</div>
+                        <div class="stat-label">Total Kontak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="processedFiles">0</div>
+                        <div class="stat-label">File Diproses</div>
+                    </div>
+                </div>
+                <div id="filesContainer"></div>
+            </div>
+
+            <div class="action-section" id="actionSection">
+                <button class="action-btn download-all-btn" id="downloadAllBtn">
+                    💾 Download Semua File VCF
+                </button>
+                <button class="action-btn download-zip-btn" id="downloadZipBtn">
+                    🗜️ Download sebagai ZIP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        let filesData = [];
+        let processedCount = 0;
+        let currentContactIndex = 1;
+        let patternApplied = false;
+
+        // Event listeners
+        document.getElementById('vcfFiles').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                loadVCFFiles(files);
+            }
+        });
+
+        // Pattern input listeners
+        ['baseName', 'startNumber', 'separator', 'digits'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        document.getElementById('applyPatternBtn').addEventListener('click', applyPattern);
+        document.getElementById('downloadAllBtn').addEventListener('click', downloadAllFiles);
+        document.getElementById('downloadZipBtn').addEventListener('click', downloadAsZip);
+
+        function loadVCFFiles(files) {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('fileList').style.display = 'none';
+            document.getElementById('patternSection').classList.remove('show');
+            document.getElementById('actionSection').classList.remove('show');
+            
+            filesData = [];
+            processedCount = 0;
+            currentContactIndex = 1;
+            patternApplied = false;
+            
+            document.getElementById('fileCount').textContent = files.length;
+            document.getElementById('loadingText').textContent = `Memproses ${files.length} file VCF...`;
+
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const vcfData = parseVCF(e.target.result);
+                        filesData.push({
+                            name: file.name,
+                            originalName: file.name.replace('.vcf', ''),
+                            contacts: vcfData,
+                            index: index
+                        });
+                        
+                        processedCount++;
+                        document.getElementById('processedFiles').textContent = processedCount;
+                        
+                        if (processedCount === files.length) {
+                            document.getElementById('loading').style.display = 'none';
+                            displayAllFiles();
+                            document.getElementById('patternSection').classList.add('show');
+                            updatePreview();
+                        }
+                    } catch (error) {
+                        console.error('Error parsing file:', file.name, error);
+                        processedCount++;
+                        if (processedCount === files.length) {
+                            document.getElementById('loading').style.display = 'none';
+                            displayAllFiles();
+                            document.getElementById('patternSection').classList.add('show');
+                        }
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function parseVCF(vcfContent) {
+            const vcfData = [];
+            const contacts = vcfContent.split('BEGIN:VCARD');
+            
+            for (let i = 1; i < contacts.length; i++) {
+                const contact = 'BEGIN:VCARD' + contacts[i];
+                const lines = contact.split('\n').map(line => line.trim()).filter(line => line);
+                
+                let name = '';
+                let phone = '';
+                
+                for (const line of lines) {
+                    if (line.startsWith('FN:')) {
+                        name = line.substring(3);
+                    } else if (line.startsWith('TEL:') || line.includes('TEL;')) {
+                        phone = line.split(':')[1] || line.split(';').pop();
+                    }
+                }
+                
+                if (phone || name) {
+                    vcfData.push({
+                        originalData: contact,
+                        originalName: name || 'Tanpa Nama',
+                        name: name || 'Tanpa Nama',
+                        phone: phone || 'Tanpa Nomor',
+                        id: i,
+                        updated: false
+                    });
+                }
+            }
+            
+            return vcfData;
+        }
+
+        function updatePreview() {
+            const baseName = document.getElementById('baseName').value || 'FIXX';
+            const startNumber = parseInt(document.getElementById('startNumber').value) || 1;
+            const separator = document.getElementById('separator').value;
+            const digits = parseInt(document.getElementById('digits').value) || 1;
+            
+            const previewContainer = document.getElementById('previewExamples');
+            previewContainer.innerHTML = '';
+            
+            for (let i = 0; i < 4; i++) {
+                const number = (startNumber + i).toString().padStart(digits, '0');
+                const name = baseName + separator + number;
+                
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.textContent = i < 3 ? name : '...';
+                previewContainer.appendChild(previewItem);
+            }
+        }
+
+        function applyPattern() {
+            const baseName = document.getElementById('baseName').value || 'FIXX';
+            const startNumber = parseInt(document.getElementById('startNumber').value) || 1;
+            const separator = document.getElementById('separator').value;
+            const digits = parseInt(document.getElementById('digits').value) || 1;
+            
+            let globalIndex = startNumber;
+            
+            filesData.forEach(fileData => {
+                fileData.contacts.forEach(contact => {
+                    const number = globalIndex.toString().padStart(digits, '0');
+                    contact.name = baseName + separator + number;
+                    contact.updated = true;
+                    globalIndex++;
+                });
+            });
+            
+            patternApplied = true;
+            displayAllFiles();
+            document.getElementById('successMessage').classList.add('show');
+            document.getElementById('actionSection').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('successMessage').classList.remove('show');
+            }, 3000);
+        }
+
+        function displayAllFiles() {
+            const container = document.getElementById('filesContainer');
+            const totalContacts = filesData.reduce((sum, file) => sum + file.contacts.length, 0);
+            
+            document.getElementById('totalContacts').textContent = totalContacts;
+            container.innerHTML = '';
+            
+            filesData.forEach((fileData, fileIndex) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-item';
+                
+                const fileHeader = document.createElement('div');
+                fileHeader.className = 'file-header';
+                fileHeader.innerHTML = `
+                    <div class="file-name">📄 ${fileData.name}</div>
+                    <div class="file-contact-count">${fileData.contacts.length} kontak</div>
+                    <button class="collapse-toggle" onclick="toggleFileContent(${fileIndex})">
+                        <span id="toggle-${fileIndex}">🔽 Tampilkan</span>
+                    </button>
+                `;
+                
+                const fileContent = document.createElement('div');
+                fileContent.className = 'file-content collapsed';
+                fileContent.id = `content-${fileIndex}`;
+                
+                const contactsGrid = document.createElement('div');
+                contactsGrid.className = 'contacts-grid';
+                
+                fileData.contacts.forEach((contact, contactIndex) => {
+                    const contactDiv = document.createElement('div');
+                    contactDiv.className = `contact-item ${contact.updated ? 'updated' : ''}`;
+                    contactDiv.innerHTML = `
+                        <div class="contact-info">
+                            <div class="contact-phone">${contact.phone}</div>
+                            <div class="contact-name">
+                                ${contact.updated ? 
+                                    `<span class="name-badge">${contact.name}</span>` : 
+                                    contact.originalName
+                                }
+                            </div>
+                        </div>
+                    `;
+                    contactsGrid.appendChild(contactDiv);
+                });
+                
+                fileContent.appendChild(contactsGrid);
+                fileDiv.appendChild(fileHeader);
+                fileDiv.appendChild(fileContent);
+                container.appendChild(fileDiv);
+            });
+            
+            document.getElementById('fileList').style.display = 'block';
+        }
+
+        function toggleFileContent(fileIndex) {
+            const content = document.getElementById(`content-${fileIndex}`);
+            const toggle = document.getElementById(`toggle-${fileIndex}`);
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                toggle.textContent = '🔼 Sembunyikan';
+            } else {
+                content.classList.add('collapsed');
+                toggle.textContent = '🔽 Tampilkan';
+            }
+        }
+
+        function generateVCFContent(contacts) {
+            let vcfContent = '';
+            
+            contacts.forEach(contact => {
+                let updatedContact = contact.originalData;
+                const lines = updatedContact.split('\n');
+                let fnUpdated = false;
+                
+                const updatedLines = lines.map(line => {
+                    if (line.trim().startsWith('FN:')) {
+                        fnUpdated = true;
+                        return 'FN:' + contact.name;
+                    }
+                    return line;
+                });
+                
+                if (!fnUpdated) {
+                    const beginIndex = updatedLines.findIndex(line => line.trim() === 'BEGIN:VCARD');
+                    if (beginIndex !== -1) {
+                        updatedLines.splice(beginIndex + 1, 0, 'FN:' + contact.name);
+                    }
+                }
+                
+                vcfContent += updatedLines.join('\n') + '\n';
+            });
+            
+            return vcfContent;
+        }
+
+        function downloadAllFiles() {
+            if (!patternApplied) {
+                alert('Silakan terapkan pattern terlebih dahulu!');
+                return;
+            }
+            
+            filesData.forEach(fileData => {
+                const vcfContent = generateVCFContent(fileData.contacts);
+                const blob = new Blob([vcfContent], { type: 'text/vcard' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileData.originalName + '_patterned.vcf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        async function downloadAsZip() {
+            if (!patternApplied) {
+                alert('Silakan terapkan pattern terlebih dahulu!');
+                return;
+            }
+            
+            const zip = new JSZip();
+            
+            filesData.forEach(fileData => {
+                const vcfContent = generateVCFContent(fileData.contacts);
+                zip.file(fileData.originalName + '_patterned.vcf', vcfContent);
+            });
+            
+            try {
+                const content = await zip.generateAsync({type: 'blob'});
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'vcf_files_patterned.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Error creating ZIP file: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

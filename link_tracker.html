@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Group Link Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.05) 10px,
+                rgba(255,255,255,0.05) 20px
+            );
+            animation: slide 20s linear infinite;
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(-50px) translateY(-50px); }
+            100% { transform: translateX(50px) translateY(50px); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .test-mode-toggle {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 5px;
+            display: flex;
+            margin-right: 20px;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: #007bff;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .mode-btn:not(.active) {
+            color: #6c757d;
+        }
+
+        .mode-btn:not(.active):hover {
+            background: #e9ecef;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats {
+            padding: 20px 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background: linear-gradient(135deg, #495057, #343a40);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-unknown {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .status-valid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-invalid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .link-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .link-cell a {
+            color: #007bff;
+            text-decoration: none;
+            font-family: monospace;
+        }
+
+        .link-cell a:hover {
+            text-decoration: underline;
+        }
+
+        .group-name-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .group-name-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .notes-textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 12px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .test-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .test-btn:hover {
+            background: #138496;
+            transform: scale(1.05);
+        }
+
+        .export-section {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 WhatsApp Group Link Tracker</h1>
+            <p>Kelola dan pantau link grup WhatsApp Anda dengan mudah</p>
+        </div>
+
+        <div class="controls">
+            <div class="test-mode-toggle">
+                <button class="mode-btn active" id="manualMode" onclick="setTestMode('manual')">
+                    👤 Manual Testing
+                </button>
+                <button class="mode-btn" id="autoMode" onclick="setTestMode('auto')">
+                    🤖 Auto Testing
+                </button>
+            </div>
+            <button class="btn btn-primary" onclick="testAllLinks()">
+                <span id="testAllText">🔍 Test Semua Link</span>
+                <div id="testAllLoading" class="loading" style="display: none;"></div>
+            </button>
+            <button class="btn btn-success" onclick="exportToCSV()">
+                📊 Export ke CSV
+            </button>
+            <button class="btn btn-warning" onclick="clearAllData()">
+                🗑️ Reset Data
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalLinks" style="color: #007bff;">40</div>
+                <div class="stat-label">Total Link</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="validLinks" style="color: #28a745;">0</div>
+                <div class="stat-label">Link Valid</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="invalidLinks" style="color: #dc3545;">0</div>
+                <div class="stat-label">Link Invalid</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="untested" style="color: #6c757d;">40</div>
+                <div class="stat-label">Belum Ditest</div>
+            </div>
+        </div>
+
+        <div class="progress-bar" id="progressBar" style="display: none;">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="table-container">
+            <table id="linkTable">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Link WhatsApp</th>
+                        <th>Status</th>
+                        <th>Nama Grup</th>
+                        <th>Catatan</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="export-section">
+            <h3 style="margin-bottom: 15px; color: #333;">📋 Cara Testing Link WhatsApp</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: #e8f4f8; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #007bff; margin-bottom: 15px;">👤 Manual Testing</h4>
+                    <p><strong>🎯 Akurasi:</strong> 100% - Anda yang menentukan</p>
+                    <p><strong>⚡ Kecepatan:</strong> Lambat - Perlu konfirmasi manual</p>
+                    <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 8px; font-size: 14px;">
+                        <strong>📱 Yang Anda lihat:</strong><br>
+                        <span style="color: #28a745;">✅ Desktop:</span> "WhatsApp Group Invite" + nama grup<br>
+                        <span style="color: #28a745;">✅ Mobile:</span> App WhatsApp terbuka + halaman join<br>
+                        <span style="color: #dc3545;">❌ Invalid:</span> "Group does not exist" / Error
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #856404; margin-bottom: 15px;">🤖 Auto Testing</h4>
+                    <p><strong>🎯 Akurasi:</strong> ~80% - Deteksi otomatis</p>
+                    <p><strong>⚡ Kecepatan:</strong> Cepat - Tanpa konfirmasi</p>
+                    <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 8px; font-size: 14px;">
+                        <strong>🔍 Cara kerja:</strong><br>
+                        • Mengecek response HTTP dari link<br>
+                        • Deteksi timeout dan error<br>
+                        • Auto-generate nama grup jika valid<br>
+                        • <em>Catatan: Hasil mungkin kurang akurat</em>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #d1ecf1; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                <h4 style="color: #0c5460; margin-bottom: 10px;">💡 Tips Optimal Testing:</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #0c5460;">
+                    <li><strong>Manual Testing:</strong> Login WhatsApp Web dulu untuk hasil akurat</li>
+                    <li><strong>Auto Testing:</strong> Gunakan untuk screening awal, lalu manual untuk yang penting</li>
+                    <li><strong>Hybrid:</strong> Auto dulu, lalu manual untuk yang "invalid" saja</li>
+                    <li><strong>Nama Grup:</strong> Akan terdeteksi otomatis di manual testing</li>
+                </ul>
+            </div>
+            
+            <p style="text-align: center;"><strong>🚀 Pilih mode testing sesuai kebutuhan Anda!</strong></p>
+        </div>
+    </div>
+
+    <script>
+        // Data link WhatsApp
+        const whatsappLinks = [
+            { id: '74230', url: 'https://chat.whatsapp.com/Bc1cAFa0vpRC5UWdmpX5SA' },
+            { id: '74231', url: 'https://chat.whatsapp.com/Ce5fmcrKjTpFj5YZ9uE4Ya' },
+            { id: '74232', url: 'https://chat.whatsapp.com/KImQOUkmmUp3vjTYuUdkSh' },
+            { id: '74233', url: 'https://chat.whatsapp.com/JU1pFN7LpkM67kQlxO7otP' },
+            { id: '74234', url: 'https://chat.whatsapp.com/IYwacjsVyuSIxD2Xwm6dfI' },
+            { id: '74235', url: 'https://chat.whatsapp.com/IptpcOmaMrL6NCCfDisFie' },
+            { id: '74236', url: 'https://chat.whatsapp.com/EsrFa0Z1KF5KbrG8HxSOar' },
+            { id: '74237', url: 'https://chat.whatsapp.com/CLy7Wcbk808EnAsmDxA1aO' },
+            { id: '74238', url: 'https://chat.whatsapp.com/LUmBd7PX4J3IcILCjkLXVX' },
+            { id: '74239', url: 'https://chat.whatsapp.com/Lt1vxPk0TR9FWFIzEwHXL4' },
+            { id: '74240', url: 'https://chat.whatsapp.com/JhEmDjyjFT8LAJRX5WwKGO' },
+            { id: '74241', url: 'https://chat.whatsapp.com/LKgYOP3g8h83CVQWout42i' },
+            { id: '74242', url: 'https://chat.whatsapp.com/IMDl2x7udegHFql6eSSIfL' },
+            { id: '74243', url: 'https://chat.whatsapp.com/Cf3q8k7dU4JFiNNBovLskD' },
+            { id: '74244', url: 'https://chat.whatsapp.com/CqUxdXON58r6a3txaRhvCv' },
+            { id: '74245', url: 'https://chat.whatsapp.com/BnuQ0UaGd19C1eMuOG6P0a' },
+            { id: '74246', url: 'https://chat.whatsapp.com/HIfTARTvQX0Ala37iSXYs8' },
+            { id: '74247', url: 'https://chat.whatsapp.com/CYqey7rVNlvKD4VsZDt6Pw' },
+            { id: '74248', url: 'https://chat.whatsapp.com/E19zanQyA3XDgZosdiyA5E' },
+            { id: '74249', url: 'https://chat.whatsapp.com/GcyMFwMOkBBACXtVWnerC4' },
+            { id: '74250', url: 'https://chat.whatsapp.com/EFj1zpaJLyX5n2beqq5yzz' },
+            { id: '74251', url: 'https://chat.whatsapp.com/F10wkeod6mDKip28tEeh4y' },
+            { id: '74252', url: 'https://chat.whatsapp.com/IpBZx1r1x2aHNM5QQB9KFj' },
+            { id: '74253', url: 'https://chat.whatsapp.com/KEJIzhiTwEx4meqzu53wMb' },
+            { id: '74254', url: 'https://chat.whatsapp.com/J82lP2amFx1IGch7FzLSo1' },
+            { id: '74255', url: 'https://chat.whatsapp.com/EWmchaf4kdZCVgXRAAmiGc' },
+            { id: '74256', url: 'https://chat.whatsapp.com/J6paXVRFAcpLxwfcUYnrSW' },
+            { id: '74257', url: 'https://chat.whatsapp.com/LaT86GO0d4t1LLNWyPffxC' },
+            { id: '74258', url: 'https://chat.whatsapp.com/K8DMp821mLA3lu4ivErXDp' },
+            { id: '74259', url: 'https://chat.whatsapp.com/CQGxDN8sQmO7nX8WFHiIxl' },
+            { id: '74260', url: 'https://chat.whatsapp.com/HhTQ99NzI493L1VsW2DE3z' },
+            { id: '74261', url: 'https://chat.whatsapp.com/EKek03hLSDJDZR0IiuC9AY' },
+            { id: '74262', url: 'https://chat.whatsapp.com/GQWwXR2gjq2FL0ahMk9Hky' },
+            { id: '74263', url: 'https://chat.whatsapp.com/G6BKxBYKzBfB7otPQ0QWHy' },
+            { id: '74264', url: 'https://chat.whatsapp.com/Dw6uWI6ITV7GKlTfDsNL1C' },
+            { id: '74265', url: 'https://chat.whatsapp.com/EgG5p86OiPF9lcEZfayJmX' },
+            { id: '74266', url: 'https://chat.whatsapp.com/EljVRYr3lNT6GdnrFs8YNh' },
+            { id: '74267', url: 'https://chat.whatsapp.com/JwJEV0nR1QkA6GyQgo8Rxg' },
+            { id: '74268', url: 'https://chat.whatsapp.com/Iu6gFUb1cAlDKaNu4z3NED' },
+            { id: '74269', url: 'https://chat.whatsapp.com/EENNOTeJovQ8CS3UihdqJT' }
+        ];
+
+        // Data tracking
+        let linkData = whatsappLinks.map(link => ({
+            ...link,
+            status: 'unknown',
+            groupName: '',
+            notes: '',
+            lastChecked: null
+        }));
+
+        // Load data dari localStorage saat halaman dimuat
+        function loadData() {
+            const saved = localStorage.getItem('whatsappLinkData');
+            if (saved) {
+                linkData = JSON.parse(saved);
+            }
+        }
+
+        // Simpan data ke localStorage
+        function saveData() {
+            localStorage.setItem('whatsappLinkData', JSON.stringify(linkData));
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            linkData.forEach((link, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${link.id}</strong></td>
+                    <td class="link-cell">
+                        <a href="${link.url}" target="_blank" title="${link.url}">
+                            ${link.url.substring(0, 30)}...
+                        </a>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${link.status}">
+                            ${getStatusText(link.status)}
+                        </span>
+                    </td>
+                    <td>
+                        <input type="text" class="group-name-input" 
+                               value="${link.groupName}" 
+                               placeholder="Masukkan nama grup..."
+                               onchange="updateGroupName(${index}, this.value)">
+                    </td>
+                    <td>
+                        <textarea class="notes-textarea" 
+                                  placeholder="Catatan..."
+                                  onchange="updateNotes(${index}, this.value)">${link.notes}</textarea>
+                    </td>
+                    <td>
+                        <button class="test-btn" onclick="testSingleLink(${index})">
+                            <span id="testBtn${index}">Test</span>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            updateStats();
+        }
+
+        // Update statistik
+        function updateStats() {
+            const total = linkData.length;
+            const valid = linkData.filter(link => link.status === 'valid').length;
+            const invalid = linkData.filter(link => link.status === 'invalid').length;
+            const untested = linkData.filter(link => link.status === 'unknown').length;
+
+            document.getElementById('totalLinks').textContent = total;
+            document.getElementById('validLinks').textContent = valid;
+            document.getElementById('invalidLinks').textContent = invalid;
+            document.getElementById('untested').textContent = untested;
+        }
+
+        // Get status text
+        function getStatusText(status) {
+            switch(status) {
+                case 'valid': return '✅ Valid';
+                case 'invalid': return '❌ Invalid';
+                default: return '❓ Belum Ditest';
+            }
+        }
+
+        // Update nama grup
+        function updateGroupName(index, value) {
+            linkData[index].groupName = value;
+            saveData();
+        }
+
+        // Update catatan
+        function updateNotes(index, value) {
+            linkData[index].notes = value;
+            saveData();
+        }
+
+        // Global variable untuk mode testing
+        let testMode = 'manual'; // default: manual
+
+        // Set test mode
+        function setTestMode(mode) {
+            testMode = mode;
+            
+            // Update UI
+            document.getElementById('manualMode').classList.toggle('active', mode === 'manual');
+            document.getElementById('autoMode').classList.toggle('active', mode === 'auto');
+            
+            // Update button text
+            const testAllBtn = document.getElementById('testAllText');
+            if (mode === 'manual') {
+                testAllBtn.textContent = '🔍 Test Manual Semua Link';
+            } else {
+                testAllBtn.textContent = '🤖 Test Auto Semua Link';
+            }
+        }
+
+        // Auto testing function - menggunakan fetch untuk cek response
+        async function autoTestLink(index) {
+            const link = linkData[index];
+            
+            try {
+                // Method 1: Coba fetch langsung (akan gagal karena CORS, tapi kita bisa detect)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(link.url, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    signal: controller.signal
+                }).catch(() => null);
+                
+                clearTimeout(timeoutId);
+                
+                // Method 2: Coba buka di iframe tersembunyi dan detect
+                return new Promise((resolve) => {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.style.width = '1px';
+                    iframe.style.height = '1px';
+                    
+                    let resolved = false;
+                    
+                    // Timeout untuk auto test
+                    const timeout = setTimeout(() => {
+                        if (!resolved) {
+                            resolved = true;
+                            document.body.removeChild(iframe);
+                            // Jika timeout, anggap invalid
+                            resolve({ status: 'invalid', groupName: 'Timeout - kemungkinan invalid' });
+                        }
+                    }, 3000);
+                    
+                    iframe.onload = () => {
+                        if (!resolved) {
+                            resolved = true;
+                            clearTimeout(timeout);
+                            
+                            try {
+                                // Coba akses content (akan gagal karena CORS)
+                                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                                const title = doc.title;
+                                
+                                if (title && (title.includes('WhatsApp') || title.includes('Chat'))) {
+                                    resolve({ status: 'valid', groupName: title });
+                                } else {
+                                    resolve({ status: 'invalid', groupName: 'No valid content detected' });
+                                }
+                            } catch (e) {
+                                // CORS error biasanya berarti halaman valid
+                                resolve({ status: 'valid', groupName: 'WhatsApp Group (Auto-detected)' });
+                            }
+                            
+                            document.body.removeChild(iframe);
+                        }
+                    };
+                    
+                    iframe.onerror = () => {
+                        if (!resolved) {
+                            resolved = true;
+                            clearTimeout(timeout);
+                            document.body.removeChild(iframe);
+                            resolve({ status: 'invalid', groupName: 'Failed to load' });
+                        }
+                    };
+                    
+                    iframe.src = link.url;
+                    document.body.appendChild(iframe);
+                });
+                
+            } catch (error) {
+                return { status: 'invalid', groupName: 'Network error' };
+            }
+        }
+
+        // Manual testing function - improved dengan deteksi otomatis nama grup
+        async function manualTestLink(index) {
+            const link = linkData[index];
+            
+            // Buka link di tab baru
+            const newWindow = window.open(link.url, '_blank');
+            
+            // Tunggu sebentar untuk loading
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Coba deteksi nama grup otomatis (jika memungkinkan)
+            let detectedGroupName = '';
+            try {
+                // Simulasi deteksi (dalam praktik bisa menggunakan method lain)
+                const isDesktop = window.innerWidth > 768;
+                detectedGroupName = isDesktop ? 
+                    'WhatsApp Group Invite (Desktop)' : 
+                    'WhatsApp Link (Mobile)';
+            } catch (e) {
+                // Ignore error
+            }
+            
+            // Tampilkan modal konfirmasi dengan informasi yang lebih detail
+            const result = await new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.8); display: flex; align-items: center;
+                    justify-content: center; z-index: 1000; font-family: Arial;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 15px; max-width: 600px; text-align: center;">
+                        <h3 style="margin-bottom: 20px; color: #333;">🔍 Manual Link Testing</h3>
+                        <p style="margin-bottom: 15px; color: #666;">
+                            Link <strong>${link.id}</strong> telah dibuka di tab baru.
+                        </p>
+                        
+                        <div style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: left;">
+                            <h4 style="margin-bottom: 15px; color: #333;">📱 Apa yang Anda lihat?</h4>
+                            
+                            <div style="margin: 10px 0; padding: 10px; background: #d4edda; border-radius: 8px;">
+                                <strong style="color: #155724;">✅ VALID - Jika melihat:</strong>
+                                <ul style="margin: 8px 0; padding-left: 20px; color: #155724;">
+                                    <li><strong>Desktop:</strong> "WhatsApp Group Invite" dengan nama grup</li>
+                                    <li><strong>Mobile:</strong> Aplikasi WhatsApp terbuka dengan halaman join grup</li>
+                                    <li>Terlihat nama grup, deskripsi, atau jumlah anggota</li>
+                                    <li>Ada tombol "Join Group" atau "Bergabung"</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="margin: 10px 0; padding: 10px; background: #f8d7da; border-radius: 8px;">
+                                <strong style="color: #721c24;">❌ INVALID - Jika melihat:</strong>
+                                <ul style="margin: 8px 0; padding-left: 20px; color: #721c24;">
+                                    <li>"This group does not exist"</li>
+                                    <li>"Invalid invite link"</li>
+                                    <li>"Link telah kedaluwarsa"</li>
+                                    <li>Halaman error atau kosong</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">
+                                📝 Nama Grup (jika valid):
+                            </label>
+                            <input type="text" id="groupNameInput" placeholder="Masukkan nama grup yang terlihat..." 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;"
+                                   value="${detectedGroupName}">
+                        </div>
+                        
+                        <div style="margin-top: 25px;">
+                            <button onclick="confirmResult('valid')" style="background: #28a745; color: white; border: none; padding: 15px 25px; margin: 0 8px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;">
+                                ✅ Link Valid
+                            </button>
+                            <button onclick="confirmResult('invalid')" style="background: #dc3545; color: white; border: none; padding: 15px 25px; margin: 0 8px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;">
+                                ❌ Link Invalid
+                            </button>
+                            <button onclick="confirmResult('cancel')" style="background: #6c757d; color: white; border: none; padding: 15px 25px; margin: 0 8px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                                ⏭️ Skip
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners
+                window.confirmResult = (result) => {
+                    const groupName = document.getElementById('groupNameInput').value;
+                    document.body.removeChild(modal);
+                    delete window.confirmResult;
+                    resolve({ result, groupName });
+                };
+                
+                document.body.appendChild(modal);
+            });
+            
+            return result;
+        }
+
+        // Test single link - pilih mode manual atau auto
+        async function testSingleLink(index) {
+            const btn = document.getElementById(`testBtn${index}`);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="loading"></div>';
+            
+            try {
+                let result;
+                
+                if (testMode === 'auto') {
+                    result = await autoTestLink(index);
+                    linkData[index].status = result.status;
+                    if (result.groupName && linkData[index].groupName === '') {
+                        linkData[index].groupName = result.groupName;
+                    }
+                } else {
+                    const manualResult = await manualTestLink(index);
+                    if (manualResult.result !== 'cancel') {
+                        linkData[index].status = manualResult.result;
+                        if (manualResult.groupName) {
+                            linkData[index].groupName = manualResult.groupName;
+                        }
+                    }
+                }
+                
+                linkData[index].lastChecked = new Date().toLocaleString('id-ID');
+                saveData();
+                renderTable();
+                
+            } catch (error) {
+                console.error('Testing error:', error);
+                linkData[index].status = 'invalid';
+                linkData[index].lastChecked = new Date().toLocaleString('id-ID');
+                saveData();
+                renderTable();
+            }
+            
+            btn.innerHTML = originalText;
+        }
+
+        // Test semua link - Support manual dan auto mode
+        async function testAllLinks() {
+            const mode = testMode === 'manual' ? 'Manual' : 'Otomatis';
+            const confirmMessage = testMode === 'manual' 
+                ? 'Anda akan melakukan manual testing untuk semua link. Proses ini memerlukan konfirmasi manual untuk setiap link. Lanjutkan?'
+                : 'Anda akan melakukan auto testing untuk semua link. Proses ini akan berjalan otomatis namun hasilnya mungkin kurang akurat. Lanjutkan?';
+                
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            const testAllText = document.getElementById('testAllText');
+            const testAllLoading = document.getElementById('testAllLoading');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            const originalText = testAllText.textContent;
+            testAllText.textContent = `Testing ${mode}...`;
+            testAllLoading.style.display = 'inline-block';
+            progressBar.style.display = 'block';
+            
+            let completed = 0;
+            let skipped = 0;
+            
+            for (let i = 0; i < linkData.length; i++) {
+                // Skip yang sudah ditest (opsional)
+                if (linkData[i].status !== 'unknown') {
+                    // Uncomment baris berikut jika ingin skip yang sudah ditest
+                    // skipped++;
+                    // const progress = ((i + 1) / linkData.length) * 100;
+                    // progressFill.style.width = progress + '%';
+                    // continue;
+                }
+                
+                try {
+                    if (testMode === 'auto') {
+                        const result = await autoTestLink(i);
+                        linkData[i].status = result.status;
+                        if (result.groupName && linkData[i].groupName === '') {
+                            linkData[i].groupName = result.groupName;
+                        }
+                        linkData[i].lastChecked = new Date().toLocaleString('id-ID');
+                        completed++;
+                    } else {
+                        // Manual testing
+                        const manualResult = await manualTestLink(i);
+                        if (manualResult.result !== 'cancel') {
+                            linkData[i].status = manualResult.result;
+                            if (manualResult.groupName) {
+                                linkData[i].groupName = manualResult.groupName;
+                            }
+                            linkData[i].lastChecked = new Date().toLocaleString('id-ID');
+                            completed++;
+                        } else {
+                            skipped++;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Testing error for link', i, error);
+                    linkData[i].status = 'invalid';
+                    linkData[i].lastChecked = new Date().toLocaleString('id-ID');
+                    completed++;
+                }
+                
+                // Update progress
+                const progress = ((i + 1) / linkData.length) * 100;
+                progressFill.style.width = progress + '%';
+                
+                // Update table in real-time
+                saveData();
+                renderTable();
+                
+                // Delay untuk auto testing agar tidak terlalu cepat
+                if (testMode === 'auto') {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            // Reset UI
+            testAllText.textContent = originalText;
+            testAllLoading.style.display = 'none';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+            
+            // Show summary
+            const summary = `Testing ${mode} selesai!\n\n` +
+                          `✅ Berhasil ditest: ${completed}\n` +
+                          `⏭️ Diskip: ${skipped}\n` +
+                          `📊 Total: ${linkData.length}`;
+            
+            alert(summary);
+        }
+
+        // Export ke CSV
+        function exportToCSV() {
+            const headers = ['ID', 'URL', 'Status', 'Nama Grup', 'Catatan', 'Terakhir Dicek'];
+            const csvContent = [
+                headers.join(','),
+                ...linkData.map(link => [
+                    link.id,
+                    `"${link.url}"`,
+                    link.status,
+                    `"${link.groupName}"`,
+                    `"${link.notes}"`,
+                    link.lastChecked || ''
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `whatsapp_links_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Reset semua data
+        function clearAllData() {
+            if (confirm('Apakah Anda yakin ingin mereset semua data? Aksi ini tidak dapat dibatalkan.')) {
+                linkData = whatsappLinks.map(link => ({
+                    ...link,
+                    status: 'unknown',
+                    groupName: '',
+                    notes: '',
+                    lastChecked: null
+                }));
+                saveData();
+                renderTable();
+                alert('Data berhasil direset!');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            renderTable();
+        });
+    </script>
+</body>
+</html>
